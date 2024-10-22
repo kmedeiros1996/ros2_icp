@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(ros2_icp)
 
-## Compile as C++14
- add_compile_options(-std=c++14)
+## Compile as C++17
+ add_compile_options(-std=c++17)
 
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -25,9 +25,8 @@ include_directories(
   )
 
 add_library(${PROJECT_NAME}
-  src/icp/utils.cpp
-  src/icp/solver.cpp
-  src/ros/conversion.cpp
+  src/icp/icp_cloud.cpp
+  #src/ros/conversion.cpp
 )
  
 add_executable(icp_node
@@ -47,4 +46,17 @@ ament_target_dependencies(${PROJECT_NAME}
   tf2_ros
   tf2_sensor_msgs
 )
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_icp_cloud test/test_icp_cloud.cpp)
+
+  target_include_directories(test_icp_cloud PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+  target_link_libraries(test_icp_cloud ${PROJECT_NAME})
+
+endif()
+
 ament_package()
