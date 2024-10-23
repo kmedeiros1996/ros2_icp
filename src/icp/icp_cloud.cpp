@@ -11,6 +11,25 @@ namespace ICP
 ICPPointCloud::ICPPointCloud(const PointCloudMat& cloud) : points_{cloud}
 {}
 
+ICPPointCloud::ICPPointCloud(const ICPPointCloud& other) : points_{other.Points()} {
+    if (other.HasCentroid()) {
+        centroid_.emplace(other.centroid_.value());
+    }
+
+    if (other.HasHomogeneous()) {
+        homo_.emplace(other.homo_.value());
+    }
+
+}
+
+ICPPointCloud& ICPPointCloud::operator=(const ICPPointCloud& other) {
+    this->points_ = other.points_;
+    this->centroid_ = other.centroid_;
+    this->homo_ = other.homo_;
+
+    return *this;
+}
+
 ICPPointCloud::ICPPointCloud(const HomogeneousPointCloudMat& homo_cloud)
 {
     points_ = PointCloudMat::Ones(homo_cloud.rows(), 3);
@@ -73,7 +92,7 @@ PointCloudMatTranspose ICPPointCloud::Transposed() {
 ICPPointCloud ICPPointCloud::Shifted(const Vec3& point) {
     PointCloudMat shifted_m = points_;
     for (int i = 0; i < points_.rows(); i++) {
-        shifted_m.row(i) = points_.row(i) - point;
+        shifted_m.row(i) = PointAt(i) - point;
     }
 
     return ICPPointCloud(shifted_m);
@@ -81,6 +100,17 @@ ICPPointCloud ICPPointCloud::Shifted(const Vec3& point) {
 
 ICPPointCloud ICPPointCloud::Centered(){
     return Shifted(Centroid());
+}
+
+ICPPointCloud ICPPointCloud::PointsByIndices(const IntVector& idxes) {
+    PointCloudMat ordered = Eigen::MatrixXd::Ones(idxes.size(), 3);
+
+    for (int i = 0; i < idxes.size(); i++) {
+        assert (idxes[i] < points_.rows());
+        ordered.row(i) = PointAt(idxes[i]);
+    }
+
+    return ICPPointCloud(ordered);
 }
 
 HomogeneousPointCloudMat ICPPointCloud::TransformedHomogeneous(const Mat4& transf){
@@ -91,41 +121,8 @@ ICPPointCloud ICPPointCloud::Transformed(const Mat4& transf) {
     return ICPPointCloud(TransformedHomogeneous(transf));
 }
 
-std::unique_ptr<NearestNeighborKDTree> ICPPointCloud::BuildKDTree() const {
-    return std::make_unique<NearestNeighborKDTree> (3, std::cref(points_), 10);
-}
-
-NearestNeighborsResult ICPPointCloud::GetNearestNeighborsResult(const Vec3& q){
-    if (!HasKDTree()) {
-        kd_tree_ = BuildKDTree();
-    }
-    SizeTVector temp_index(1);
-    DoubleVector temp_dist(1);
-
-    NanoFlannKNNResults knn_results(1);
-    knn_results.init(&temp_index[0], &temp_dist[0]);
-    DoubleVector query_pt{q(0), q(1), q(2)};
-    kd_tree_->index->findNeighbors(knn_results, &query_pt[0], nanoflann::SearchParams(10));
-    
-    NearestNeighborsResult nn;
-    nn.distance = temp_dist[0];
-    nn.index = int(temp_index[0]);
-
-    return nn;
-}
-
-NearestNeighborsResultVector ICPPointCloud::GetNearestNeighborsResults(const Vec3Vector& qs) {
-    NearestNeighborsResultVector results;
-    for (const Vec3& q : qs) {
-        results.push_back(GetNearestNeighborsResult(q));
-    }
-
-    return results;
-}
-
-Vec3 ICPPointCloud::GetNearestPoint(const Vec3& q) {
-    NearestNeighborsResult n = GetNearestNeighborsResult(q);
-    return PointAt(n.index);
+ICP::KDTree ICPPointCloud::ToKDTree() const {
+    return ICP::KDTree(points_);
 }
 
 bool ICPPointCloud::HasHomogeneous() const {
@@ -138,10 +135,6 @@ bool ICPPointCloud::HasCentroid() const {
 
 bool ICPPointCloud::HasTranspose() const {
     return trans_.has_value();
-}
-
-bool ICPPointCloud::HasKDTree() const {
-    return kd_tree_ != nullptr;
 }
 
 } // namespace ICP

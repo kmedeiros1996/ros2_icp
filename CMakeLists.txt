@@ -26,6 +26,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/icp/icp_cloud.cpp
+  src/icp/kd_tree.cpp
   #src/ros/conversion.cpp
 )
  

@@ -24,7 +24,6 @@ TEST(ICPCloudTest, Construction) {
         EXPECT_EQ(pc.Homogeneous(), homo_pc_m);
         EXPECT_EQ(homo_pc.PointAt(i), pc_m.row(i));
     }
-
 }
 
 TEST(ICPCloudTest, Centroid) {
@@ -56,6 +55,7 @@ TEST(ICPCloudTest, Shifting) {
         EXPECT_TRUE(ICP::AreVec3sClose(expected_shifted_pc.row(i), pc_m_shifted.row(i), 0.001));
     }
 }
+
 TEST(ICPCloudTest, Centering) {
     ICP::ICPPointCloud pc (ICP::PointCloudMat{{1., 1., 1.}, {2., 2., 2.}, {3., 3., 3.}});
 
@@ -85,19 +85,35 @@ TEST(ICPCloudTest, Transformation) {
     }
 }
 
+TEST(ICPCloudTest, PointsByIndices) {
+    ICP::ICPPointCloud pc (ICP::PointCloudMat{{1., 1., 1.}, 
+                                              {2., 2., 2.}, 
+                                              {4., 4., 4.}, 
+                                              {3., 3., 3.}});
+
+    ICP::IntVector idxes{1, 2, 1, 2, 0, 0};
+    ICP::ICPPointCloud ordered = pc.PointsByIndices(idxes);
+
+    for (int i = 0; i < idxes.size(); i++) {
+        EXPECT_EQ(ordered.PointAt(i), pc.PointAt(idxes[i]));
+    }
+}
+
 TEST(ICPCloudTest, KDTree) 
 {
     ICP::ICPPointCloud pc (ICP::PointCloudMat{{1., 1., 1.}, {2., 2., 2.}, {3., 3., 3.}});
+
     ICP::Vec3Vector query_pts{{1.25, 1.25, 1.25},
                               {2.96, 3.14, 1.99},
                               {1.73, 0.99, 2.001}};
     ICP::IntVector expected_indices{0, 2, 1};
 
-    ICP::NearestNeighborsResultVector results = pc.GetNearestNeighborsResults(query_pts);
-
-    for (int i = 0; i < results.size(); i++) {
-        EXPECT_EQ(results[i].index, expected_indices[i]);
+    ICP::KDTree pc_tree = pc.ToKDTree();
+    cout <<"made tree"<<endl;
+    ICP::NearestNeighborsResults results = pc_tree.GetNearestNeighborsResults(query_pts);
+    cout<<"got results"<<endl;
+    for (int i = 0; i < results.indices.size(); i++) {
+        EXPECT_EQ(results.indices[i], expected_indices[i]);
     }
-
 
 }

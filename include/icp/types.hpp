@@ -43,16 +43,11 @@ using Mat4 = Eigen::Matrix4d;
 using NanoFlannKNNResults = nanoflann::KNNResultSet<double>;
 using NearestNeighborKDTree = nanoflann::KDTreeEigenMatrixAdaptor<PointCloudMat>;
 
-struct NearestNeighborsResult {
-    int index;
-    double distance;
-};
 
 using SizeTVector = std::vector<size_t>;
 using IntVector = std::vector<double>;
 using DoubleVector = std::vector<double>;
 using Vec3Vector = std::vector<Vec3>;
-using NearestNeighborsResultVector = std::vector<NearestNeighborsResult>;
 
 
 using ROSLaserScan = sensor_msgs::msg::LaserScan;

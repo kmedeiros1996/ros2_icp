@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 icp_cloud.hpp
 Author: Skye Medeiros
@@ -7,6 +9,7 @@ Convenience class which shortcuts some often used calculations and data structur
 */
 
 #include <icp/types.hpp>
+#include <icp/kd_tree.hpp>
 
 #include <optional>
 #include <memory>
@@ -24,6 +27,13 @@ class ICPPointCloud
     // ICPPointClouds can also be constructed from a homogeneous pointcloud (num_pts * 4)
     // which initializes both the euclidean AND homogeneous point set.
     ICPPointCloud(const HomogeneousPointCloudMat& homo_cloud); 
+
+    // Copy Constructor
+    ICPPointCloud(const ICPPointCloud& other);
+
+    // Assignment operator
+    ICPPointCloud& operator=(const ICPPointCloud& other);
+
 
     PointCloudMat                            Points() const;
     Vec3                                     PointAt(int idx) const;
@@ -54,34 +64,24 @@ class ICPPointCloud
 
     // Builds and caches the centroid AND pointcloud in homogeneous coordinates if they don't exist.
     ICPPointCloud                            Centered();
-    
-    // Builds and caches the KD Tree if it doesn't exist.
-    // Returns a struct containing the index of and distance to the closest point.
-    NearestNeighborsResult                   GetNearestNeighborsResult(const Vec3& q);
-    NearestNeighborsResultVector             GetNearestNeighborsResults(const Vec3Vector& qs);
 
-    // Builds and caches the KD Tree if it doesn't exist.
-    // Returns the closest point in this pointcloud to a query point.
-    Vec3                                     GetNearestPoint(const Vec3& q);
+    // Given a list of indices, returns a pointcloud with the points ordered by the specified indices
+    ICPPointCloud                            PointsByIndices(const IntVector& idxes);
 
     bool                                     HasHomogeneous() const;
     bool                                     HasCentroid() const;
-    bool                                     HasKDTree() const;
     bool                                     HasTranspose() const;
 
-    private:
-    std::unique_ptr<NearestNeighborKDTree>   BuildKDTree() const;
+    ICP::KDTree                              ToKDTree() const;
 
     private:
 
     // Every ICPPointCloud will possess a PointCloudMat at minimum.
-    // The KD Tree, centroid, and pointcloud in heterogenous coordinates
+    // The centroid, transpose, and pointcloud in heterogenous coordinates
     // are all lazily initialized.
-
     PointCloudMat                            points_; 
     std::optional<Vec3>                      centroid_;
     std::optional<PointCloudMatTranspose>    trans_;
     std::optional<HomogeneousPointCloudMat>  homo_;
-    std::unique_ptr<NearestNeighborKDTree>   kd_tree_;
 };
 } // namespace ICP
