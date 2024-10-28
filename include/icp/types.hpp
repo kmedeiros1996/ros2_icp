@@ -14,6 +14,12 @@ so type shortcuts like these make me happy
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include "message_filters/subscriber.h"
+#include "tf2_ros/message_filter.h"
+#include "nav2_util/lifecycle_node.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <memory>
 #include <vector>
@@ -48,11 +54,14 @@ using SizeTVector = std::vector<size_t>;
 using IntVector = std::vector<double>;
 using DoubleVector = std::vector<double>;
 using Vec3Vector = std::vector<Vec3>;
-
+using ParametersVector = std::vector<rclcpp::Parameter>;
 
 using ROSLaserScan = sensor_msgs::msg::LaserScan;
 using ROSPointCloud = sensor_msgs::msg::PointCloud2;
 using ROSTF = geometry_msgs::msg::TransformStamped;
-using ROSOdometry = nav_msgs::msg::Odometry;
+using ROSPoseWithCovariance = geometry_msgs::msg::PoseWithCovarianceStamped;
+
+using LaserScanSubscriber = message_filters::Subscriber<ROSLaserScan, rclcpp_lifecycle::LifecycleNode>;
+using LaserScanFilter = tf2_ros::MessageFilter<ROSLaserScan>;
 
 } // namespace ICP
