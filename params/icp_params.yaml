@@ -1,0 +1,8 @@
+icp_params:
+  ros__parameters:
+    scan_topic: "scan"
+    odom_frame_id: "odom"
+    base_frame_id: "base_link"
+    scan_match_min_rotation: 0.25
+    scan_match_min_translation: 0.1
+    transform_tolerance: 10.0
